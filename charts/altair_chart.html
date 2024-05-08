@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5.17.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "data": {"name": "data-cd2c4db0f8bb5e34ffae076ceb7f40c3"}, "mark": {"type": "bar"}, "encoding": {"tooltip": [{"field": "Feature", "type": "nominal"}, {"field": "Contribution", "type": "quantitative"}], "x": {"field": "Feature", "sort": null, "title": "Feature (Value)", "type": "nominal"}, "y": {"field": "Contribution", "title": "Contribution to Log-Odds", "type": "quantitative"}}, "height": 400, "width": 800, "$schema": "https://vega.github.io/schema/vega-lite/v5.17.0.json", "datasets": {"data-cd2c4db0f8bb5e34ffae076ceb7f40c3": [{"Feature": "age(25)", "Value": "25", "Contribution": -0.6495}, {"Feature": "workclass(Private)", "Value": "Private", "Contribution": 0.0}, {"Feature": "fnlwgt(112847)", "Value": 112847, "Contribution": -0.0586}, {"Feature": "education(HS-grad)", "Value": "HS-grad", "Contribution": 0.0}, {"Feature": "educational-num(9)", "Value": 9, "Contribution": -0.2432}, {"Feature": "marital-status(Married-civ-spouse)", "Value": "Married-civ-spouse", "Contribution": 0.0}, {"Feature": "occupation(Transport-moving)", "Value": "Transport-moving", "Contribution": 0.0}, {"Feature": "relationship(Own-child)", "Value": "Own-child", "Contribution": 0.0}, {"Feature": "race(Other)", "Value": "Other", "Contribution": 0.0}, {"Feature": "gender(Male)", "Value": "Male", "Contribution": 0.0}, {"Feature": "capital-gain(0)", "Value": 0, "Contribution": -0.2356}, {"Feature": "capital-loss(0)", "Value": 0, "Contribution": -0.0438}, {"Feature": "hours-per-week(40)", "Value": 40, "Contribution": 0.044}, {"Feature": "native-country(United-States)", "Value": "United-States", "Contribution": 0.0}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>
