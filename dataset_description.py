@@ -11,8 +11,6 @@ def get_data_description(llm, df):
     prompt = f"The dataset contains {n_samples} samples and {n_features} features, which are: {', '.join(features)}. "
     prompt += """Please provide a detailed description of this dataset, including detailed description of each features and the prediction goals(usually shown in the last column of the file.Besides, you shoule give suggestions for possible machine learning tasks such as classification or regression, according to whether the prediction goal is discrete.
     Here is an exemplified output:
-    Extraction was done by Barry Becker from the 1994 Census database.  A set of reasonably clean records was extracted using the following conditions: ((AAGE>16) && (AGI>100) && (AFNLWGT>1)&& (HRSWK>0))
-    Prediction task is to determine whether a person makes over 50K a year. And This indicates that features with a positive contribution score help a person make over 50K a year.
     Feature Descriptions:
         age - The age of the passenger.
         workclass: The type of work this person does.

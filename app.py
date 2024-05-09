@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import numpy as np
 from streamlit_pandas_profiling import st_profile_report
+from trubrics.integrations.streamlit import FeedbackCollector
 from sklearn.model_selection import train_test_split
 from ebm_agent import get_agent
 from shap_agent import shap_get_agent
@@ -94,6 +95,22 @@ def main():
             #st.sidebar.text("XGBoost has been trained on data")
             #SHAP_explainer(model, X_train)
             shap_chat_interaction(X_train, model, data_description)
+            collector = FeedbackCollector(
+                email=None,
+                password=None,
+                project="default"
+            )
+            #feedback_option = "faces" if st.toggle(label="`Thumbs` ⇄ `Faces`", value=False) else "thumbs"
+            user_feedback = collector.st_feedback(
+                component="default",
+                feedback_type="faces",
+                open_feedback_label="[Optional] Provide additional feedback",
+                model="gpt-3.5-turbo",
+                prompt_id=None,  # checkout collector.log_prompt() to log your user prompts
+            )
+
+            if user_feedback:
+                st.write(user_feedback)
             #功能待完成
 
 def setup_api_key():
@@ -128,10 +145,10 @@ def ebm_train(df):
 
     # 设置 EBM 参数以提高模型性能
     ebm = ExplainableBoostingClassifier(
-        interactions=15,  # 允许更多交互
+        interactions=0,  # 允许更多交互
         max_bins=256,    # 提高离散化 bins 数量
         max_interaction_bins=64,  # 增加交互 bins 数量
-        max_rounds=800  # 增加训练轮数
+        max_rounds=400  # 增加训练轮数
     )
 
     # 模型训练
@@ -172,7 +189,7 @@ def handle_chat_interaction(df, ebm, data_description):
             response = process_prompt_with_agent(prompt, df, ebm, data_description)
             st.session_state.messages.append({"role": "assistant", "content": response})
             st.chat_message("assistant").write(response)
-            manage_feedback(df, ebm)
+            #manage_feedback(df, ebm)
 
 
 def process_prompt_with_agent(prompt, df, ebm, data_description):
@@ -182,31 +199,17 @@ def process_prompt_with_agent(prompt, df, ebm, data_description):
     return eag.run(prompt, callbacks=[st_cb])
 
 
-def manage_feedback(df, ebm):
-    feedback = st.sidebar.radio("Does this answer meet your expectations?", (':+1: Yes', ':shit: No'), index=None, key='feedback')
-    if feedback == ':shit: No':
-        feedback_details = st.sidebar.text_area("请提供反馈，帮助我们改进解释：", key='feedback_details')
-        if st.sidebar.button("根据反馈重新生成解释", key='feedback_button'):
-            if feedback_details:
-                new_explanation = process_prompt_with_agent(feedback_details, df, ebm)
-                st.session_state.messages.append({"role": "assistant", "content": new_explanation})
-                st.chat_message("assistant").write("根据反馈调整后的解释结果:", new_explanation)
-                st.session_state['feedback_details'] = ''  # Reset feedback details after processing
-                st.experimental_rerun()  # Optional: trigger a rerun to refresh the state
-            else:
-                st.sidebar.error("请输入反馈详情。")
-
 @st.cache_data
 def XGBoost_train(df):
     label_encoder = LabelEncoder()
-    df['income'] = label_encoder.fit_transform(df['income'])
-
+    #df['income'] = label_encoder.fit_transform(df['income'])
+    df['y'] = label_encoder.fit_transform(df['y'])
     # 为每个分类特征独立实例化 LabelEncoder
-    categorical_columns = ['workclass', 'education', 'marital-status', 'occupation', 'relationship', 'race',
-                           'gender', 'native-country']
-    encoders = {col: LabelEncoder() for col in categorical_columns}
-    for column in categorical_columns:
-        df[column] = encoders[column].fit_transform(df[column])
+    #categorical_columns = ['workclass', 'education', 'marital-status', 'occupation', 'relationship', 'race',
+    #                      'gender', 'native-country']
+    #encoders = {col: LabelEncoder() for col in categorical_columns}
+    #for column in categorical_columns:
+    #    df[column] = encoders[column].fit_transform(df[column])
 
     # 分离特征和目标变量
     X = df.iloc[:, :-1]
@@ -222,8 +225,8 @@ def XGBoost_train(df):
         #'num_class': len(np.unique(y)),  # 类别数量
         'objective': 'binary:logistic',  # 二分类任务目标
         'eval_metric': 'logloss',  # 评估指标
-        'max_depth': 7,  # 树的最大深度
-        'eta': 0.1,  # 学习率
+        'max_depth': 3,  # 树的最大深度
+        'eta': 0.02,  # 学习率
     }
     model = xgb.train(params, dtrain, num_boost_round=100)
     # 进行预测
@@ -310,7 +313,7 @@ def shap_chat_interaction(df, model, data_description):
             response = process_prompt_with_shap_agent(prompt, df, model, data_description)
             st.session_state.messages.append({"role": "assistant", "content": response})
             st.chat_message("assistant").write(response)
-            shap_manage_feedback(df, model)
+            #shap_manage_feedback(df, model)
 
 
 def process_prompt_with_shap_agent(prompt, df, model, data_description):
@@ -320,10 +323,6 @@ def process_prompt_with_shap_agent(prompt, df, model, data_description):
     return eag.run(prompt, callbacks=[st_cb])
 
 
-def shap_manage_feedback(df, model):
-    feedback = st.sidebar.radio("Does this answer meet your expectations?", (':+1: Yes', ':shit: No'), index=None, key='feedback')
-    if feedback == ':shit: No':
-        feedback_details = st.sidebar.text_area("Please provide feedback to improve:", key='feedback_details')
 
 
 if __name__ == "__main__":
