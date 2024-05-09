@@ -70,7 +70,11 @@ def main():
     st.markdown(google_fonts, unsafe_allow_html=True)
 
     setup_api_key()
-    uploaded_file = st.file_uploader("", type=list(file_formats.keys()))
+    uploaded_file = st.file_uploader("upload data file", type=list(file_formats.keys()))
+    rag_files = st.file_uploader("upload knowledge documents",
+                                      accept_multiple_files=True,
+                                      type=["pdf", "text", "txt"],
+                                      key="a")
 
     if uploaded_file:
         df = load_data(uploaded_file)
@@ -124,10 +128,10 @@ def ebm_train(df):
 
     # 设置 EBM 参数以提高模型性能
     ebm = ExplainableBoostingClassifier(
-        interactions=5,  # 允许更多交互
+        interactions=15,  # 允许更多交互
         max_bins=256,    # 提高离散化 bins 数量
         max_interaction_bins=64,  # 增加交互 bins 数量
-        max_rounds=500  # 增加训练轮数
+        max_rounds=800  # 增加训练轮数
     )
 
     # 模型训练
@@ -145,9 +149,14 @@ def ebm_train(df):
     st.sidebar.json(report)
 
     st.sidebar.write("Confusion metrix:")
-    st.sidebar.write(confusion)
+    #st.sidebar.write(confusion)
+    # 可视化混淆矩阵
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(confusion, annot=True, fmt='d', cmap='Blues', xticklabels=['Predicted 0', 'Predicted 1'],
+                yticklabels=['Actual 0', 'Actual 1'])
+    st.sidebar.pyplot()
 
-    return ebm, X_test
+    return ebm, X
 
 def handle_chat_interaction(df, ebm, data_description):
     if 'messages' not in st.session_state:
@@ -213,7 +222,7 @@ def XGBoost_train(df):
         #'num_class': len(np.unique(y)),  # 类别数量
         'objective': 'binary:logistic',  # 二分类任务目标
         'eval_metric': 'logloss',  # 评估指标
-        'max_depth': 4,  # 树的最大深度
+        'max_depth': 7,  # 树的最大深度
         'eta': 0.1,  # 学习率
     }
     model = xgb.train(params, dtrain, num_boost_round=100)
@@ -233,7 +242,7 @@ def XGBoost_train(df):
     # 计算并显示混淆矩阵
     cm = confusion_matrix(y_test, y_pred_binary)
     st.sidebar.write("Confusion Matrix:")
-    st.sidebar.write(pd.DataFrame(cm, columns=['Predicted 0', 'Predicted 1'], index=['Actual 0', 'Actual 1']))
+    #st.sidebar.write(pd.DataFrame(cm, columns=['Predicted 0', 'Predicted 1'], index=['Actual 0', 'Actual 1']))
 
     # 可视化混淆矩阵
     plt.figure(figsize=(8, 6))
